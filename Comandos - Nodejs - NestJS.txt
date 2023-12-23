@@ -1,0 +1,53 @@
+Instalar o CLI do NEST
+
+npm i -g @nestjs/cli
+
+CRIANDO UM PROJETO NOVO
+
+nest new nome-projeto
+
+INSTALAÇÃO DO ORM PRISMA EM AMBIENTE DE DESENVOLVIMENTO
+
+npm i -D prisma
+
+ATUALIZAR O ARQUIVO DO PRISMA COM OS DADOS DA TABELA CRIADA
+
+npx prisma db pull
+
+CRIAR O PRISMA CLIENT QUE SERÁ API QUE VAMOS UTILIZAR
+
+npx prisma generate
+
+CRIAR MODULO OFICIAL PARA UTILIZAR O JWT na aplicação
+
+npm i @nestjs/jwt
+
+INSTALAR DEPENDENCIA PARA ENCRIPTAR SENHA
+
+npm i bcrypt
+
+INSTALAR DEPENDENCIA DE TIPOS DO BCRYPT EM DESENVOLVIMENTO
+
+npm i -D @types/bcrypt
+
+INSTALAR DEPENDENCIA PARA LIMITAR QUANTIDADE DE REQUISIÇÕES NA APLICAÇÃO POR FAIXA DE TEMPO 
+
+npm i @nestjs/throttler
+
+INSTALAR MODULO PARA LEITURA DE VARIAVEIS DE AMBIENTE (Ele serve para várias outras configurações também)
+
+npm i @nestjs/config
+
+INSTALAR DEPENDENCIA DE TIPOS DO MULTER PARA MANIPULAÇÃO DE ARQUIVOS NO UPLOAD APENAS EM AMBIENTE DE DESENVOLVIMENTO
+
+npm i -D @types/multer
+
+INSTALAR DEPENDENCIA PARA ENVIAR E-MAILS - Biblioteca do nodejs
+
+	- INSTALAR A BIBLIOOTECA -> npm install --save @nestjs-modules/mailer nodemailer
+
+	- INSTALAR OS TYPES EM DESENVOLVIMENTO -> npm install --save-dev @types/nodemailer
+
+	- INSTALAR O TEMPLATE PARA FORMATAÇÃO DE CONTEUDO HTML -> npm install --save pug
+	
+	- SERVIDOR FAKE DE ENVIO DE E-MAIL: https://ethereal.email/
