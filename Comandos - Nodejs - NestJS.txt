@@ -51,3 +51,209 @@ INSTALAR DEPENDENCIA PARA ENVIAR E-MAILS - Biblioteca do nodejs
 	- INSTALAR O TEMPLATE PARA FORMATAÇÃO DE CONTEUDO HTML -> npm install --save pug
 	
 	- SERVIDOR FAKE DE ENVIO DE E-MAIL: https://ethereal.email/
+	
+---------------------------------------------------------------------------------------------------------------------------
+
+INSTALAR DEPENDENCIA DO ORM TYPEORM E DO POSTGRES
+
+npm install pg @nestjs/typeorm
+
+npm i typeorm
+
+---------------------------------------------------------------------------------------------------------------------------
+
+CHECK LIST 
+
+1 - Instalar CLI do nest
+
+ - npm i -g @nestjs/cli
+ 
+2 - Criar projeto
+
+ - nest new nome-projeto
+ 
+3 - Instalar modulo para podermos ler variaveis de ambiente do projeto
+
+ - npm i @nestjs/config
+ 
+---------------------- CONEXÃO BANCO DE DADOS ------------------------------
+ 
+4 - Instalação do ORM typeorm para podermos fazer operações de banco de dados
+
+ - npm install pg @nestjs/typeorm
+ - npm i typeorm
+
+5 - Criar conexão com o banco de dados ( Configurar no app.module.ts)
+
+	TypeOrmModule.forRoot({
+		  type: 'postgres',
+		  host: process.env.DB_HOST,
+		  port: Number(process.env.DB_PORT),
+		  username: process.env.DB_USERNAME,
+		  password: process.env.DB_PASSWORD,
+		  database: process.env.DB_DATABASE,
+		  entities: [UserEntity],
+		  synchronize: process.env.ENV === "development"
+		})
+		
+---------------------- ENTITYS ------------------------------
+		
+6 - Criar as entidades de banco de dados
+
+	@Entity({name: 'users'})
+	export class UserEntity {
+
+		@PrimaryGeneratedColumn({
+			unsigned: true
+		})
+		id: number;
+
+		@Column({
+			nullable: true   
+		})
+		name: string;
+
+		@Column({
+			unique: true,
+			nullable: true
+		})
+		email: string;
+
+		@Column({
+			nullable: true
+		})
+		password: string;
+
+		@CreateDateColumn()
+		createdAt: string;
+
+		@UpdateDateColumn()
+		updatedAt: string;
+
+		@Column({
+			type: "enum",
+			enum: UserRole,
+			default: UserRole.VIEWER
+		})
+		role: UserRole;
+	}
+	
+	export enum UserRole {
+		ADMIN = "admin",
+		EDITOR = "editor",
+		VIEWER = "viewer",
+	}
+	
+	
+---------------------- REPOSITORYS ------------------------------
+	
+	
+7 - Ao criar as entidades, será necessário indicar no module quais entidades serão utilizados.
+Caso tenha vários modulos na aplicação e determinada entidade será utilizada nesse modulo,
+então dentro do modulo especifico, faça a importação necessária da entidade que será utilizada. 
+
+ - TypeOrmModule.forFeature([UserEntity])
+	
+	exemplo: 
+	
+	
+	@Module({
+		imports: [TypeOrmModule.forFeature([UserEntity])],
+		controllers: [UserControle],
+		providers: [UserService],
+		exports: [UserService]
+	})
+	export class UsersModule {}
+	
+---------------------- SERVICES ------------------------------
+	
+8 - Dentro dos services que terão metodos que utilizarão a entidade, será necessário injetar o repository
+no contrutor do service para que possamos utilizar os métodos do repository.
+
+	-	@InjectRepository(UserEntity)
+        private userRepository: Repository<UserEntity>
+		
+	exemplo: 
+	
+	constructor(
+        @InjectRepository(UserEntity)
+        private userRepository: Repository<UserEntity>
+    ) {}
+	
+9 - Após injetar o repository no construtor, faça a criação dos metodos e as logicas necessárias
+
+Exemplo: 
+
+    async createUser(user: UserEntity) {
+
+        Logger.log('Starting to create a user.');
+        
+        if (await this.userRepository.exist({
+            where: {
+                email: user.email
+            }
+        })) {
+            throw new UserDuplicateEntryException(user.email);
+        }
+
+        try {
+            return await this.userRepository.save(user);
+        } catch (error) {
+            Logger.error('Error occurred to create user.', error);
+            throw new InternalServerErrorException('Error occurred to create user.');
+        }
+
+    }
+
+---------------------- CONTROLER -> DTOs ------------------------------
+
+
+10 - Como boa prática, é sempre bom utilizar DTOs para trafegar os dados vindos de fontes externas que chegaram até a API solicitada,
+com isso, podemos especificar regras para cada atributo recebido. 
+
+Para que possamos utilizar essa validação, é necessário instalar as dependencias: 
+
+- npm install class-validator --save
+
+- npm i @nestjs/class-transformer
+
+
+E depois informar a configuração globalmente no arquivo 'main.ts', com isso é só começar a realizar as validações
+
+Exemplo: 
+
+	app.useGlobalPipes(new ValidationPipe());
+
+Exemplo de um campo espefico do DTO: 
+
+	 @IsString({
+        message: 'Campo descrição não preenchido.',
+    })
+    description: string;
+	
+10.1 - Além disso, podemos usar a biblioteca "@nestjs/mapped-types" para realizar transformações ou mudanças 
+a partir de outro DTO já existente.   Isso é útil quando você deseja criar tipos novos com base em tipos existentes,
+mas com algumas modificações, como tornar certos campos opcionais, adicionais ou removê-los completamente.
+
+Exemplo:
+
+	export class TaskUpdatePatchDTO extends PartialType(TaskCreateDTO) {}
+
+- A  classe TaskUpdatePatchDTO criará um novo tipo com base no TaskCreateDTO, onde todos os campos serão tornados opcionais.
+ Isso é útil, por exemplo, ao lidar com atualizações parciais de recursos, onde você deseja permitir que o cliente envie 
+ apenas os campos que deseja atualizar, sem a necessidade de fornecer todos os campos novamente.
+
+- Existe também a opção de especificar quais campos devem ser tornados opcionais usando a função PickType da biblioteca @nestjs/mapped-types.
+ Esta função permite criar um novo tipo baseado em um tipo existente, mas com apenas um subconjunto de campos especificados.
+ 
+Exemplo: 
+
+	export class TaskUpdatePatchDTO extends PickType(TaskCreateDTO, ['description', 'startDate', 'finalDate']) {}
+ 
+- Existe também a opção de especificar quais campos devem ser tornados obrigatórios em um tipo derivado, 
+você pode usar a função OmitType da biblioteca @nestjs/mapped-types. Esta função cria um novo tipo baseado
+em um tipo existente, mas com alguns campos omitidos.
+
+Exemplo: 
+
+	export class TaskUpdatePatchDTO extends OmitType(TaskCreateDTO, ['optionalField1', 'optionalField2']) {}
